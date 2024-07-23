@@ -24,6 +24,7 @@ class DatasetBlindSR(data.Dataset):
         self.patch_size = self.opt['H_size'] if self.opt['H_size'] else self.lq_patchsize*self.sf
 
         self.paths_H = util.get_image_paths(opt['dataroot_H'])
+        self.paths_L = util.get_image_paths(opt['dataroot_L'])
         print(len(self.paths_H))
 
 #        for n, v in enumerate(self.paths_H):
@@ -34,8 +35,8 @@ class DatasetBlindSR(data.Dataset):
 
     def __getitem__(self, index):
 
-        L_path = None
-
+        L_path = self.paths_L[index]
+        img_L = util.imread_uint(L_path, self.n_channels)
         # ------------------------------------
         # get H image
         # ------------------------------------
@@ -52,36 +53,36 @@ class DatasetBlindSR(data.Dataset):
         # ------------------------------------
         if self.opt['phase'] == 'train':
 
-            H, W, C = img_H.shape
+            # H, W, C = img_H.shape
 
-            rnd_h_H = random.randint(0, max(0, H - self.patch_size))
-            rnd_w_H = random.randint(0, max(0, W - self.patch_size))
-            img_H = img_H[rnd_h_H:rnd_h_H + self.patch_size, rnd_w_H:rnd_w_H + self.patch_size, :]
+            # rnd_h_H = random.randint(0, max(0, H - self.patch_size))
+            # rnd_w_H = random.randint(0, max(0, W - self.patch_size))
+            # img_H = img_H[rnd_h_H:rnd_h_H + self.patch_size, rnd_w_H:rnd_w_H + self.patch_size, :]
 
-            if 'face' in img_name:
-                mode = random.choice([0, 4])
-                img_H = util.augment_img(img_H, mode=mode)
-            else:
-                mode = random.randint(0, 7)
-                img_H = util.augment_img(img_H, mode=mode)
+         
+            mode = random.randint(0, 7)
+            img_H = util.augment_img(img_H, mode=mode)
+            img_L = util.augment_img(img_L, mode=mode)
 
-            img_H = util.uint2single(img_H)
-            if self.degradation_type == 'bsrgan':
-                img_L, img_H = blindsr.degradation_bsrgan(img_H, self.sf, lq_patchsize=self.lq_patchsize, isp_model=None)
-            elif self.degradation_type == 'bsrgan_plus':
-                img_L, img_H = blindsr.degradation_bsrgan_plus(img_H, self.sf, shuffle_prob=self.shuffle_prob, use_sharp=self.use_sharp, lq_patchsize=self.lq_patchsize)
 
-        else:
-            img_H = util.uint2single(img_H)
-            if self.degradation_type == 'bsrgan':
-                img_L, img_H = blindsr.degradation_bsrgan(img_H, self.sf, lq_patchsize=self.lq_patchsize, isp_model=None)
-            elif self.degradation_type == 'bsrgan_plus':
-                img_L, img_H = blindsr.degradation_bsrgan_plus(img_H, self.sf, shuffle_prob=self.shuffle_prob, use_sharp=self.use_sharp, lq_patchsize=self.lq_patchsize)
+
+            # if self.degradation_type == 'bsrgan':
+            #     img_L, img_H = blindsr.degradation_bsrgan(img_H, self.sf, lq_patchsize=self.lq_patchsize, isp_model=None)
+            # elif self.degradation_type == 'bsrgan_plus':
+            #     img_L, img_H = blindsr.degradation_bsrgan_plus(img_H, self.sf, shuffle_prob=self.shuffle_prob, use_sharp=self.use_sharp, lq_patchsize=self.lq_patchsize)
+
+        # else:
+        #     img_H = util.uint2single(img_H)
+
+            # if self.degradation_type == 'bsrgan':
+            #     img_L, img_H = blindsr.degradation_bsrgan(img_H, self.sf, lq_patchsize=self.lq_patchsize, isp_model=None)
+            # elif self.degradation_type == 'bsrgan_plus':
+            #     img_L, img_H = blindsr.degradation_bsrgan_plus(img_H, self.sf, shuffle_prob=self.shuffle_prob, use_sharp=self.use_sharp, lq_patchsize=self.lq_patchsize)
 
         # ------------------------------------
         # L/H pairs, HWC to CHW, numpy to tensor
         # ------------------------------------
-        img_H, img_L = util.single2tensor3(img_H), util.single2tensor3(img_L)
+        img_H, img_L = util.uint2tensor3(img_H), util.uint2tensor3(img_L)
 
         if L_path is None:
             L_path = H_path

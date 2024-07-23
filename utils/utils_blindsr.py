@@ -463,7 +463,7 @@ def degradation_bsrgan(img, sf=4, lq_patchsize=72, isp_model=None):
         img = np.clip(img, 0.0, 1.0)
         sf = 2
 
-    shuffle_order = random.sample(range(7), 7)
+    shuffle_order = random.sample(range(6), 6)
     idx1, idx2 = shuffle_order.index(2), shuffle_order.index(3)
     if idx1 > idx2:  # keep downsample3 last
         shuffle_order[idx1], shuffle_order[idx2] = shuffle_order[idx2], shuffle_order[idx1]
@@ -504,11 +504,11 @@ def degradation_bsrgan(img, sf=4, lq_patchsize=72, isp_model=None):
             if random.random() < jpeg_prob:
                 img = add_JPEG_noise(img)
 
-        elif i == 6:
-            # add processed camera sensor noise
-            if random.random() < isp_prob and isp_model is not None:
-                with torch.no_grad():
-                    img, hq = isp_model.forward(img.copy(), hq)
+        # elif i == 6:
+        #     # add processed camera sensor noise
+        #     if random.random() < isp_prob and isp_model is not None:
+        #         with torch.no_grad():
+        #             img, hq = isp_model.forward(img.copy(), hq)
 
     # add final JPEG compression noise
     img = add_JPEG_noise(img)
